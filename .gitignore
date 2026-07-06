@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+data/raw/
+data/index.db
+data/embeddings.npy
+.env
+.DS_Store

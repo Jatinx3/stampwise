@@ -1,0 +1,42 @@
+# StampWise Mini — URL allowlist. Ingestion NEVER fetches anything not listed here.
+# All URLs verified 200 on 2026-07-05.
+user_agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 StampWiseMini/0.1 (research; contact: iamjatinxd@gmail.com)"
+delay_seconds: 1.0
+
+urls:
+  # --- irishimmigration.ie: stamps, registration, study, citizenship ---
+  - https://www.irishimmigration.ie/registering-your-immigration-permission/information-on-registering/immigration-permission-stamps/
+  - https://www.irishimmigration.ie/registering-your-immigration-permission/
+  - https://www.irishimmigration.ie/registering-your-immigration-permission/how-to-register-your-immigration-permission-for-the-first-time/
+  - https://www.irishimmigration.ie/registering-your-immigration-permission/how-to-renew-your-current-permission/
+  - https://www.irishimmigration.ie/coming-to-live-in-ireland/
+  - https://www.irishimmigration.ie/coming-to-study-in-ireland/
+  - https://www.irishimmigration.ie/my-situation-has-changed-since-i-arrived-in-ireland/third-level-graduate-programme/
+  - https://www.irishimmigration.ie/coming-to-join-family-in-ireland/
+  - https://www.irishimmigration.ie/how-to-become-a-citizen/
+  - https://www.irishimmigration.ie/how-to-become-a-citizen/become-an-irish-citizen-by-naturalisation/
+  - https://www.irishimmigration.ie/coming-to-visit-ireland/
+  - https://www.irishimmigration.ie/coming-to-live-in-ireland/i-want-to-invest-in-ireland/
+
+  # --- citizensinformation.ie: residence, students, permits, citizenship ---
+  - https://www.citizensinformation.ie/en/moving-country/moving-to-ireland/rights-of-residence-in-ireland/registration-of-non-eea-nationals-in-ireland/
+  - https://www.citizensinformation.ie/en/moving-country/moving-to-ireland/studying-in-ireland/immigration-nonEEA-students/
+  - https://www.citizensinformation.ie/en/moving-country/visas-for-ireland/student-visas/
+  - https://www.citizensinformation.ie/en/moving-country/visas-for-ireland/visa-requirements-for-entering-ireland/
+  - https://www.citizensinformation.ie/en/moving-country/visas-for-ireland/permission-to-land-in-ireland/
+  - https://www.citizensinformation.ie/en/moving-country/working-in-ireland/employment-permits/overview-employment-permits/
+  - https://www.citizensinformation.ie/en/moving-country/working-in-ireland/employment-permits/green-card-permits/
+  - https://www.citizensinformation.ie/en/moving-country/working-in-ireland/employment-permits/work-permits/
+  - https://www.citizensinformation.ie/en/moving-country/working-in-ireland/employment-permits/spousal-work-permit-scheme/
+  - https://www.citizensinformation.ie/en/moving-country/working-in-ireland/migrant-workers/coming-to-work-in-ireland/
+  - https://www.citizensinformation.ie/en/moving-country/irish-citizenship/becoming-an-irish-citizen-through-naturalisation/
+  - https://www.citizensinformation.ie/en/moving-country/irish-citizenship/irish-citizenship-through-birth-or-descent/
+  - https://www.citizensinformation.ie/en/moving-country/irish-citizenship/your-right-to-irish-citizenship/
+
+  # --- enterprise.gov.ie: employment permits ---
+  - https://enterprise.gov.ie/en/what-we-do/workplace-and-skills/employment-permits/
+  - https://enterprise.gov.ie/en/what-we-do/workplace-and-skills/employment-permits/permit-types/
+  - https://enterprise.gov.ie/en/what-we-do/workplace-and-skills/employment-permits/permit-types/critical-skills-employment-permit/
+  - https://enterprise.gov.ie/en/what-we-do/workplace-and-skills/employment-permits/permit-types/general-employment-permit/
+  - https://enterprise.gov.ie/en/what-we-do/workplace-and-skills/employment-permits/employment-permit-eligibility/highly-skilled-eligible-occupations-list/
+  - https://enterprise.gov.ie/en/what-we-do/workplace-and-skills/employment-permits/employment-permit-eligibility/ineligible-categories-of-employment/
