@@ -1,5 +1,6 @@
 """Hybrid retrieval: FTS5 BM25 top-10 + cosine top-10 -> RRF -> top-4."""
 
+import os
 import re
 import sqlite3
 from functools import lru_cache
@@ -13,6 +14,13 @@ BGE_QUERY_PREFIX = "Represent this sentence for searching relevant passages: "
 RRF_K = 60
 CANDIDATES = 10
 TOP_N = 4
+# Vector candidates below this cosine are dropped. Keyword-only matches then
+# top out at 1/(RRF_K+1) ≈ 0.016, under the abstention threshold — this is
+# what lets off-corpus questions abstain despite sharing keywords ("Stamp",
+# "Ireland") with the corpus. Tuned on data/golden.jsonl (see README); higher
+# floors catch more traps but start abstaining on short definitional
+# questions ("What is Stamp 1G?" peaks at cosine 0.704).
+COSINE_FLOOR = float(os.environ.get("COSINE_FLOOR", "0.70"))
 
 
 def get_db() -> sqlite3.Connection:
@@ -33,9 +41,19 @@ def _embeddings():
     return np.load(EMB_PATH)
 
 
+# Question-phrasing words that dilute BM25 on short chunks.
+STOPWORDS = frozenset("""
+a about after am an and any are as at be before by can could do does for from
+get has have how i if in into is it its me my need of on or should so than
+that the their there they this to under until wants was we what when where
+which while who whose why will with would you your
+""".split())
+
+
 def fts_search(con: sqlite3.Connection, query: str, k: int = CANDIDATES) -> list[int]:
     """BM25 keyword search. Returns chunk ids, best first."""
-    terms = re.findall(r"[A-Za-z0-9]+", query)
+    terms = [t for t in re.findall(r"[A-Za-z0-9]+", query)
+             if t.lower() not in STOPWORDS]
     if not terms:
         return []
     match = " OR ".join(f'"{t}"' for t in terms)
@@ -45,12 +63,13 @@ def fts_search(con: sqlite3.Connection, query: str, k: int = CANDIDATES) -> list
     return [r["rowid"] for r in rows]
 
 
-def vector_search(query: str, k: int = CANDIDATES) -> list[int]:
+def vector_search(query: str, k: int = CANDIDATES,
+                  floor: float = COSINE_FLOOR) -> list[int]:
     """Brute-force cosine over normalized embeddings. Returns chunk ids."""
     q = _embedder().encode([BGE_QUERY_PREFIX + query], normalize_embeddings=True)[0]
     sims = _embeddings() @ q
     order = sims.argsort()[::-1][:k]
-    return [int(i) + 1 for i in order]  # embedding row i <-> chunk id i+1
+    return [int(i) + 1 for i in order if sims[i] >= floor]  # row i <-> chunk id i+1
 
 
 def rrf_fuse(rankings: list[list[int]], k: int = RRF_K) -> dict[int, float]:

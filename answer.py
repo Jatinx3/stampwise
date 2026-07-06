@@ -6,7 +6,7 @@ import re
 import search
 
 # Tuned on data/golden.jsonl via `python eval.py --sweep` (see README).
-ABSTAIN_THRESHOLD = float(os.environ.get("ABSTAIN_THRESHOLD", "0.03"))
+ABSTAIN_THRESHOLD = float(os.environ.get("ABSTAIN_THRESHOLD", "0.02"))
 
 NOT_FOUND = "That isn't covered in my indexed sources."
 DISCLAIMER = "This is general information, not legal advice."
@@ -15,10 +15,12 @@ SYSTEM_PROMPT = """\
 You are StampWise Mini, an assistant for Irish immigration questions.
 Answer using ONLY the numbered source excerpts provided. Rules:
 - Cite every claim with the excerpt number in square brackets, e.g. [1] or [2][3].
-- Never use knowledge that is not in the excerpts.
-- If the excerpts do not contain enough information to answer, reply exactly:
+- Never use knowledge that is not in the excerpts, even for topics you know well.
+- If the excerpts do not directly address the question's topic, do not answer
+  from adjacent material. Reply exactly:
   "That isn't covered in my indexed sources."
-- Be concise and factual. Do not add a disclaimer; one is appended automatically."""
+- Be concise and factual. Do not add a disclaimer; one is appended automatically.
+Answers without [n] citations are rejected automatically."""
 
 
 def should_abstain(top_score: float | None, threshold: float = ABSTAIN_THRESHOLD) -> bool:
@@ -60,6 +62,10 @@ def answer(question: str) -> dict:
     text = llm.chat(build_prompt(question, chunks)).strip()
     citations = map_citations(text, chunks)
     abstained = NOT_FOUND.rstrip(".") in text
+    if not abstained and not citations:
+        # Grounding guard: every claim must cite an excerpt. No [n] anywhere
+        # means the model answered from its own knowledge — reject it.
+        text, citations, abstained = NOT_FOUND, [], True
     return {"answer": f"{text}\n\n{DISCLAIMER}", "citations": citations,
             "chunks": chunks, "abstained": abstained}
 
