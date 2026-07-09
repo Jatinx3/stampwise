@@ -10,6 +10,10 @@ from openai import OpenAI
 
 DEFAULT_BASE_URL = "https://api.groq.com/openai/v1"
 MODEL = os.environ.get("LLM_MODEL", "llama-3.3-70b-versatile")
+# Set LLM_REASONING_EXCLUDE=1 for reasoning models behind OpenRouter
+# (e.g. nemotron) so chain-of-thought is stripped from the reply.
+EXTRA_BODY = ({"reasoning": {"exclude": True}}
+              if os.environ.get("LLM_REASONING_EXCLUDE") == "1" else None)
 
 
 def get_client() -> OpenAI:
@@ -26,5 +30,6 @@ def chat(messages: list[dict], temperature: float = 0.1, max_tokens: int = 800) 
     resp = get_client().chat.completions.create(
         model=MODEL, messages=messages,
         temperature=temperature, max_tokens=max_tokens,
+        extra_body=EXTRA_BODY,
     )
     return resp.choices[0].message.content or ""

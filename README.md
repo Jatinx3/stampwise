@@ -103,6 +103,23 @@ export LLM_MODEL=llama3.1        # any local model
 python app.py
 ```
 
+### Using OpenRouter free models
+
+Also the same code path (free key: openrouter.ai/keys):
+
+```bash
+export OPENAI_BASE_URL=https://openrouter.ai/api/v1
+export OPENAI_API_KEY=sk-or-v1-...
+export LLM_MODEL=meta-llama/llama-3.3-70b-instruct:free
+```
+
+Caveats: free variants are rate-limited (~50 req/day without credits) and
+periodically 429 when the shared upstream pool is congested — retry later or
+switch models. Reasoning models (e.g.
+`nvidia/nemotron-3-super-120b-a12b:free`) can leak chain-of-thought into the
+reply; set `LLM_REASONING_EXCLUDE=1` to ask OpenRouter to strip it (honored
+by most, not all, upstream providers).
+
 Note: small local models may answer without `[n]` citations; the grounding
 guard then replaces the reply with the refusal message. The default
 (`llama-3.3-70b-versatile` on Groq) follows the citation format reliably.
@@ -132,3 +149,4 @@ git push space main
 | `LLM_MODEL` | `llama-3.3-70b-versatile` | chat model |
 | `ABSTAIN_THRESHOLD` | `0.02` | min top RRF score to call the LLM |
 | `COSINE_FLOOR` | `0.70` | min cosine for vector candidates |
+| `LLM_REASONING_EXCLUDE` | unset | `1` strips reasoning traces (OpenRouter) |
