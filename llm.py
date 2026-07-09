@@ -5,8 +5,28 @@ Default: Groq free tier. For Ollama set e.g.
 """
 
 import os
+from pathlib import Path
 
 from openai import OpenAI
+
+
+def _load_dotenv():
+    """Load KEY=VALUE lines from .env next to this file (stdlib, no dep).
+
+    Real environment variables win; .env only fills gaps.
+    """
+    env_file = Path(__file__).parent / ".env"
+    if not env_file.exists():
+        return
+    for line in env_file.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, val = line.partition("=")
+        os.environ.setdefault(key.strip(), val.strip().strip("'\""))
+
+
+_load_dotenv()
 
 DEFAULT_BASE_URL = "https://api.groq.com/openai/v1"
 MODEL = os.environ.get("LLM_MODEL", "llama-3.3-70b-versatile")
