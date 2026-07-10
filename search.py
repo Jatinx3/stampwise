@@ -17,10 +17,12 @@ TOP_N = 4
 # Vector candidates below this cosine are dropped. Keyword-only matches then
 # top out at 1/(RRF_K+1) ≈ 0.016, under the abstention threshold — this is
 # what lets off-corpus questions abstain despite sharing keywords ("Stamp",
-# "Ireland") with the corpus. Tuned on data/golden.jsonl (see README); higher
-# floors catch more traps but start abstaining on short definitional
-# questions ("What is Stamp 1G?" peaks at cosine 0.704).
-COSINE_FLOOR = float(os.environ.get("COSINE_FLOOR", "0.70"))
+# "Ireland") with the corpus. Tuned on data/golden.jsonl (see README).
+# Loose on purpose: casual phrasings like "what is stamp 2" embed as low as
+# ~0.67 on bge-small, so tighter floors abstain on real questions. Traps that
+# clear this floor are caught by the RRF agreement threshold or, past that,
+# the prompt rules + no-citation grounding guard.
+COSINE_FLOOR = float(os.environ.get("COSINE_FLOOR", "0.65"))
 
 
 def get_db() -> sqlite3.Connection:
@@ -39,6 +41,13 @@ def _embedder():
 def _embeddings():
     import numpy as np
     return np.load(EMB_PATH)
+
+
+def normalize_query(query: str) -> str:
+    """Split glued letter->digit tokens: "stamp2" -> "stamp 2",
+    "stamp1g" -> "stamp 1g". Digit->letter stays joined ("1g", "2a")
+    since stamp names are written that way in the corpus."""
+    return re.sub(r"(?<=[A-Za-z])(?=\d)", " ", query)
 
 
 # Question-phrasing words that dilute BM25 on short chunks.
@@ -83,6 +92,7 @@ def rrf_fuse(rankings: list[list[int]], k: int = RRF_K) -> dict[int, float]:
 
 def search(query: str, top_n: int = TOP_N) -> list[dict]:
     """Return top_n chunks with RRF scores, best first."""
+    query = normalize_query(query)
     con = get_db()
     try:
         fused = rrf_fuse([fts_search(con, query), vector_search(query)])

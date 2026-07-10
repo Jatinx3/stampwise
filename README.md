@@ -42,9 +42,10 @@ citizensinformation.ie and enterprise.gov.ie (explicit allowlist in
 
 1. **Abstention gate** — if the top RRF score is below `ABSTAIN_THRESHOLD`
    (0.02), the LLM is never called and the app answers
-   *"That isn't covered in my indexed sources."* Vector candidates below
-   `COSINE_FLOOR` (0.70) are dropped first, so keyword-only overlap
-   ("Stamp", "Ireland") can't clear the gate on its own.
+   *"That isn't covered in my indexed sources."* Clearing 0.02 requires the
+   keyword and vector rankings to agree on a chunk; vector candidates below
+   `COSINE_FLOOR` (0.65) are dropped first. Queries are normalized before
+   search ("stamp2" -> "stamp 2").
 2. **Prompt** — the LLM may only use the four provided excerpts and must cite
    each claim as `[n]`.
 3. **Grounding guard** — a returned answer containing no `[n]` citations at
@@ -59,21 +60,24 @@ citizensinformation.ie and enterprise.gov.ie (explicit allowlist in
 |---|---|
 | hit@4 (answerable) | 0.95 |
 | MRR@10 (answerable) | 0.96 |
-| Trap abstention (score gate) | 3/5 |
+| Trap abstention (score gate) | 1/5 |
+| Trap refusal end-to-end (gate + LLM layers) | 5/5 |
 | False-abstain rate | 0/20 (0.00) |
 
 Threshold tuning (`python eval.py --sweep`): the gate is stable across
 0.018–0.028; 0.02 sits mid-plateau.
 
-**Documented near-miss.** Two traps ("current national minimum wage",
-"exchange a foreign driving licence") share enough vocabulary with permit
-salary/registration chunks to clear the score gate. Raising `COSINE_FLOOR`
-to 0.76 catches all 5 traps but starts false-abstaining on short definitional
-questions ("What is Stamp 1G?" peaks at cosine 0.704 — below three of the
-traps), so the gate stays at 0.70. Both leaked traps are still refused
-downstream: the excerpts they retrieve don't address the question, and the
-prompt + no-citation guard clamp the reply to the refusal message (verified
-end-to-end against a local Ollama model).
+**Documented near-miss / design tradeoff.** On a 483-chunk corpus,
+bge-small's cosine range is too compressed to separate on-topic-adjacent
+traps ("minimum wage", "Stamp 9") from tersely phrased real questions:
+"what is stamp 2" peaks at cosine 0.695 while four of the five traps peak
+higher (up to 0.751). Any `COSINE_FLOOR` strict enough to score-gate all
+five traps also false-abstains on casual definitional queries — the floor
+therefore stays loose (0.65) and only 1/5 traps is caught by the score gate
+alone. The other four are refused at the next layers (prompt rules +
+no-citation guard): all 5/5 traps produce the refusal message end-to-end,
+verified live against `llama-3.3-70b` / `nemotron-3-super` via OpenRouter.
+The tradeoff buys a 0/20 false-abstain rate with natural phrasings.
 
 **Golden-set status:** machine-drafted, `reviewed: false` on every item.
 `eval.py` prints a loud warning until a human verifies each question and
@@ -148,5 +152,5 @@ git push space main
 | `OPENAI_BASE_URL` | Groq endpoint | any OpenAI-compatible server |
 | `LLM_MODEL` | `llama-3.3-70b-versatile` | chat model |
 | `ABSTAIN_THRESHOLD` | `0.02` | min top RRF score to call the LLM |
-| `COSINE_FLOOR` | `0.70` | min cosine for vector candidates |
+| `COSINE_FLOOR` | `0.65` | min cosine for vector candidates |
 | `LLM_REASONING_EXCLUDE` | unset | `1` strips reasoning traces (OpenRouter) |

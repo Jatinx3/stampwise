@@ -7,7 +7,7 @@ import pytest
 
 from answer import extract_citations, map_citations, should_abstain
 from ingest import chunk_markdown, est_tokens
-from search import rrf_fuse
+from search import normalize_query, rrf_fuse
 
 
 # --- chunking ---
@@ -42,6 +42,14 @@ def test_tiny_boilerplate_slivers_dropped():
     md = "# Nav\nHome\n# Real\n" + "content " * 40
     chunks = chunk_markdown(md)
     assert [c["heading_path"] for c in chunks] == ["Real"]
+
+
+# --- query normalization ---
+
+def test_normalize_query_splits_glued_stamp_names():
+    assert normalize_query("what is stamp2") == "what is stamp 2"
+    assert normalize_query("what is stamp1g") == "what is stamp 1g"
+    assert normalize_query("Stamp 1G rules") == "Stamp 1G rules"  # unchanged
 
 
 # --- RRF ---

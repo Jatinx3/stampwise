@@ -15,7 +15,11 @@ DISCLAIMER_MD = ("⚠️ **Informational only, not legal advice.** Answers come 
 def respond(message: str, history: list) -> str:
     if not message.strip():
         return "Please ask a question."
-    result = answer_mod.answer(message)  # single-turn by design: history unused
+    try:
+        result = answer_mod.answer(message)  # single-turn by design: history unused
+    except Exception:
+        return ("The language model is temporarily unavailable (free-tier "
+                "rate limit or provider hiccup). Please try again in a minute.")
     text = result["answer"]
     if result["citations"]:
         lines = [f"[{n}] [{c['page_title']} — {c['heading_path']}]({c['source_url']})"

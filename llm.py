@@ -52,4 +52,7 @@ def chat(messages: list[dict], temperature: float = 0.1, max_tokens: int = 800) 
         temperature=temperature, max_tokens=max_tokens,
         extra_body=EXTRA_BODY,
     )
+    # Congested free-tier providers occasionally return 200 with no choices.
+    if not resp.choices:
+        raise RuntimeError(f"LLM returned no choices (provider issue): {resp}")
     return resp.choices[0].message.content or ""
